@@ -829,7 +829,7 @@ uint256 static GetOrphanRoot(const CBlock* pblock)
 int64 static GetBlockValue(int nHeight, int64 nFees)
 {
     int64 nSubsidy = 6 * COIN;
-	
+
     if (nHeight == 66)
     {
         nSubsidy = 66  * COIN;
@@ -849,13 +849,14 @@ int64 static GetBlockValue(int nHeight, int64 nFees)
     return nSubsidy + nFees;
 }
 
-static const int64 nTargetTimespan = 60 * 66 ; // 6coin: 66 minutes
-static const int64 nTargetSpacing = 66; // 6coin: 66 second blocks
+
+static const int64 nTargetTimespan = 60* 66; // 6coin: 66 minutes
+static const int64 nTargetSpacing = 66; // 6coin: 2 minute blocks
 static const int64 nInterval = nTargetTimespan / nTargetSpacing;
 
 // Thanks: Balthazar for suggesting the following fix
 // https://bitcointalk.org/index.php?topic=182430.msg1904506#msg1904506
-static const int64 nReTargetHistoryFact = 4; // look at 4 times the retarget
+static const int64 nReTargetHistoryFact = 2; // look at 2 times the retarget
                                              // interval into the block history
 
 //
@@ -873,37 +874,14 @@ unsigned int ComputeMinWork(unsigned int nBase, int64 nTime)
     bnResult.SetCompact(nBase);
     while (nTime > 0 && bnResult < bnProofOfWorkLimit)
     {
-        // Maximum 400% adjustment...
-        bnResult *= 4;
-        // ... in best-case exactly 4-times-normal target time
-        nTime -= nTargetTimespan*4;
+        // Maximum 200% adjustment...
+        bnResult *= 2;
+        // ... in best-case exactly 2-times-normal target time
+        nTime -= nTargetTimespan*2;
     }
     if (bnResult > bnProofOfWorkLimit)
         bnResult = bnProofOfWorkLimit;
     return bnResult.GetCompact();
-}
-bool ShouldApplyNewRetargetRules(const CBlockIndex* pindexLast)
-{
-  unsigned int nMinHeightForNewRules = 1000;
-  return pindexLast->nHeight + 1 > nMinHeightForNewRules;
-}
-
-bool ShouldApplyRetarget(const CBlockIndex* pindexLast, const CBlock *pblock)
-{
-  unsigned int nMaxTimeInterval = 8400;
-  bool bShouldRetarget = false;
-  
-  if (ShouldApplyNewRetargetRules(pindexLast))
-  {
-    // We have exceeded max. time for current difficulty, change 
-    bShouldRetarget |= (pindexLast->nTime + nMaxTimeInterval) < pblock->nTime;
-  }
-  // Check if we should retarget diff.
-  if (!ShouldApplyRetarget(pindexLast))
-  // We have reached retarget height
-  bShouldRetarget |= (pindexLast->nHeight + 1) % nInterval == 0;
-  
-  return bShouldRetarget;
 }
 
 unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlock *pblock)
@@ -962,8 +940,8 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
     printf("  nActualTimespan = %"PRI64d"  before bounds\n", nActualTimespan);
     if (nActualTimespan < nTargetTimespan/4)
         nActualTimespan = nTargetTimespan/4;
-    if (nActualTimespan > nTargetTimespan*4)
-        nActualTimespan = nTargetTimespan*4;
+    if (nActualTimespan > nTargetTimespan*2)
+        nActualTimespan = nTargetTimespan*2;
 
     // Retarget
     CBigNum bnNew;
@@ -2053,7 +2031,7 @@ bool LoadBlockIndex(bool fAllowNew)
         block.hashPrevBlock = 0;
         block.hashMerkleRoot = block.BuildMerkleTree();
         block.nVersion = 1;
-        block.nTime    = 1371764896; 
+        block.nTime    = 1371764896; //epochtime
         block.nBits    = 0x1e0ffff0;
         block.nNonce   = 4339314;
 
